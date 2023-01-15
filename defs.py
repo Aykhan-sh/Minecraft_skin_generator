@@ -1,0 +1,14 @@
+IMSIZE = 256
+DEVICE = "cuda:3"
+DATA_PATH = "data/album_covers_512/"
+SAMPLE_DIR = "results/samples"
+WEIGHTS_DIR = "results/weights"
+SEED = 23
+EVALUATION_INTERVAL = 1
+USE_RAM = False
+
+TRAIN_BATCH_SIZE = 8
+EVAL_BATCH_SIZE = 16
+LR = 0.00001
+NUM_TRAIN_TIMESTEPS = 1000
+EPOCHS = 50
