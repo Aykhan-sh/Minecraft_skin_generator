@@ -50,7 +50,8 @@ class CoverDataset(Dataset):
             img = img - img.min()
             if img.max() != 0:
                 img = img / img.max()
-
+            img = img - 0.5
+            img = img * 2
         img = img.transpose(2, 0, 1)
         return img
 

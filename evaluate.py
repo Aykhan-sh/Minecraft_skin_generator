@@ -14,19 +14,19 @@ def make_grid(images, rows, cols):
     return grid
 
 
-def evaluate(epoch, pipeline):
+def evaluate(epoch, pipeline, size=EVAL_BATCH_SIZE):
     # Sample some images from random noise (this is the backward diffusion process).
     # The default pipeline output type is `List[PIL.Image]`
     images = pipeline(
-        batch_size=EVAL_BATCH_SIZE,
+        batch_size=size,
         generator=torch.Generator(device=DEVICE),
     ).images
 
     # Make a grid out of the images
     image_grid = make_grid(
         images,
-        rows=int(EVAL_BATCH_SIZE ** (1 / 2)),
-        cols=int(EVAL_BATCH_SIZE ** (1 / 2)),
+        rows=int(size ** (1 / 2)),
+        cols=int(size ** (1 / 2)),
     )
 
     # Save the images
