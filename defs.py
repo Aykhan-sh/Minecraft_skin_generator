@@ -1,17 +1,16 @@
-from typing import Literal
-
 IMSIZE = 128
 DEVICE = "cuda"
 DATA_PATH = "data/album_covers_512/"
 SAMPLE_DIR = "results/samples"
 WEIGHTS_DIR = "results/weights"
 SEED = 23
-EVALUATION_INTERVAL = 1
-USE_RAM = False
-PRECISION: Literal["fp16", "no"] = "fp16"
+EVALUATION_INTERVAL = 5
+USE_RAM = True
+NUM_WORKERS = 8
+MIXED_PRECISION = False
 
-TRAIN_BATCH_SIZE = 64
-EVAL_BATCH_SIZE = 16
+TRAIN_BATCH_SIZE = 160
+EVAL_BATCH_SIZE = 64
 LR = 0.0001
 NUM_TRAIN_TIMESTEPS = 1000
-EPOCHS = 1000
+EPOCHS = 10000
