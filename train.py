@@ -51,12 +51,11 @@ noise_scheduler = DDPMScheduler(num_train_timesteps=NUM_TRAIN_TIMESTEPS)
 
 lr_scheduler = get_cosine_schedule_with_warmup(
     optimizer=optimizer,
-    num_warmup_steps=len(train_dataloader) * 10,
+    num_warmup_steps=int(len(train_dataloader) * 0.1),
     num_training_steps=(len(train_dataloader) * EPOCHS),
 )
 
 for epoch in tqdm(range(EPOCHS)):
-
     progress_bar = tqdm(total=len(train_dataloader))
     model.train()
     progress_bar.set_description(f"Epoch {epoch}")
@@ -72,7 +71,7 @@ for epoch in tqdm(range(EPOCHS)):
             loss = F.mse_loss(noise_pred, noise)
         loss.backward(loss)
 
-        clip_grad_norm_(model.parameters(), 1.0)
+        # clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         lr_scheduler.step()
         optimizer.zero_grad()

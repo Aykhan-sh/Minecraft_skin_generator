@@ -15,7 +15,7 @@ class CoverDataset(Dataset):
         use_ram: bool = False,
     ) -> None:
         super().__init__()
-        self.images = os.listdir(dir_path)
+        self.images = sorted(os.listdir(dir_path))
         self.images = [os.path.join(dir_path, i) for i in self.images]
         self.imsize = imsize
         self.transforms = transforms
@@ -32,7 +32,7 @@ class CoverDataset(Dataset):
             enumerate(self.images), desc="Loading dataset", total=len(self.images)
         ):
             img = cv2.imread(image_path)[:, :, ::-1]
-            img = cv2.resize(img, (self.imsize, self.imsize))
+            # img = cv2.resize(img, (self.imsize, self.imsize))
             self.loaded_images[idx] = img
 
     def __getitem__(self, index) -> np.array:
