@@ -27,6 +27,8 @@ from defs import (
     NUM_WORKERS,
 )
 
+torch.backends.cudnn.benchmark = True
+torch.jit.enable_onednn_fusion(True)
 os.makedirs(SAMPLE_DIR, exist_ok=True)
 os.makedirs(WEIGHTS_DIR, exist_ok=True)
 
@@ -46,8 +48,10 @@ model = torch.nn.DataParallel(model)
 model.to(DEVICE)
 
 # utils
-optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
-noise_scheduler = DDPMScheduler(num_train_timesteps=NUM_TRAIN_TIMESTEPS)
+optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+noise_scheduler = DDPMScheduler(
+    num_train_timesteps=NUM_TRAIN_TIMESTEPS, beta_schedule="squaredcos_cap_v2"
+)
 
 lr_scheduler = get_cosine_schedule_with_warmup(
     optimizer=optimizer,
@@ -59,6 +63,7 @@ for epoch in tqdm(range(EPOCHS)):
     progress_bar = tqdm(total=len(train_dataloader))
     model.train()
     progress_bar.set_description(f"Epoch {epoch}")
+    train_loss_mean = torch.tensor(0, dtype=float, device=DEVICE)
     for step, imgs in enumerate(train_dataloader):
         imgs = imgs.to(DEVICE).float()
         noise = torch.randn(imgs.shape).to(DEVICE)
@@ -74,14 +79,15 @@ for epoch in tqdm(range(EPOCHS)):
         # clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         lr_scheduler.step()
-        optimizer.zero_grad()
-
+        for param in model.parameters():
+            param.grad = None
+        train_loss_mean += loss
         progress_bar.update(1)
         logs = {
-            "loss": loss.detach().item(),
             "lr": lr_scheduler.get_last_lr()[0],
         }
         progress_bar.set_postfix(**logs)
+    print(f"Epoch {epoch}, Loss: {(train_loss_mean / len(train_dataloader)).item()}")
     model.eval()
     pipeline = DDPMPipeline(unet=model.module, scheduler=noise_scheduler)
     if (epoch + 1) % EVALUATION_INTERVAL == 0 or epoch == EPOCHS - 1:
