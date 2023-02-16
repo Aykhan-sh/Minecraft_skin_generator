@@ -1,2 +1,2 @@
-CUDA_VISIBLE_DEVICES=1,2,3 \
-python train.py
+CUDA_VISIBLE_DEVICES=2,3 \
+python train_ddp.py

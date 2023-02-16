@@ -1,9 +1,8 @@
-from diffusers import DDPMPipeline
 from PIL import Image
-import math
 import torch
 import os
 from defs import DEVICE, EVAL_BATCH_SIZE, SAMPLE_DIR, SEED
+from PIL import Image
 
 
 def make_grid(images, rows, cols):
@@ -23,14 +22,6 @@ def evaluate(epoch, pipeline, size=EVAL_BATCH_SIZE):
         batch_size=size,
         generator=generator,
     ).images
-
-    # Make a grid out of the images
-    image_grid = make_grid(
-        images,
-        rows=int(size ** (1 / 2)),
-        cols=int(size ** (1 / 2)),
-    )
-
-    # Save the images
-    os.makedirs(SAMPLE_DIR, exist_ok=True)
-    image_grid.save(f"{SAMPLE_DIR}/{epoch:04d}.png")
+    os.makedirs(f"{SAMPLE_DIR}/{epoch:04d}", exist_ok=True)
+    for idx, i in enumerate(images):
+        i.save(f"{SAMPLE_DIR}/{epoch:04d}/{idx}.png")

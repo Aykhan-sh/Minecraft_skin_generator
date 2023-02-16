@@ -130,5 +130,5 @@ dmypy.json
 data/
 results*
 best_weights*/
-duplicates.ipynb
+weights/
 debug.ipynb

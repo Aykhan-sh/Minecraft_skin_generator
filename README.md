@@ -1,11 +1,12 @@
-# Music Album Cover Generator
-This is a music album cover generator train pipeline with an unconditional denoising diffusion model from huggingface. The pipeline was built using this <a href="https://colab.research.google.com/github/huggingface/notebooks/blob/main/diffusers/training_example.ipynb#scrollTo=1aaf676d-e992-4606-9116-f0324de50772" target="_blank">tutorial notebook</a> as a reference.
+# Minecraft skins generator based on Denoising Diffusion Model
+This is a Minecraft skins generator train pipeline with an unconditional denoising diffusion model from huggingface. The pipeline was built using this <a href="https://colab.research.google.com/github/huggingface/notebooks/blob/main/diffusers/training_example.ipynb#scrollTo=1aaf676d-e992-4606-9116-f0324de50772" target="_blank">tutorial notebook</a> as a reference.
+
+![alt text](pictures/output.png)
 
 # Data
-The dataset was taken from <a href="https://archive.org/details/album-covers" target="_blank">Internet archive</a> with the next filtrations:
-1) Only square images were used.
-2) Images that are no smaller than 128x128
-3) All duplicates were removed using imagededub library.
+The dataset was taken from <a href="https://www.kaggle.com/datasets/aryashah2k/huge-minecraft-skins-dataset" target="_blank">kaggle</a>
+
+No augmentations were used. As preprocess all inputs were scaled between -1 and 1
 
 # Hyperparameters
 To change hyperparameters please refer to `defs.py` file.
@@ -29,4 +30,5 @@ EPOCHS: number of epochs
 ```
 # Multi GPU
 If you do not specify a particular cuda device id, the pipeline will distribute the load on all of your cuda devices. It is recommended to change `CUDA_VISIBLE_DEVICES` in `start.sh` file to chose what devices to use.
-# Weights and examples will be posted later)
+
+Also there are files train_ddp.py and train_dp.py that uses Distributed Data Parallel and Data Parallel for multi gpu train. So you can chose between them. However, train_ddp.py is recommended.

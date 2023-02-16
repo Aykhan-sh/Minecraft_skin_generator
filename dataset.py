@@ -3,6 +3,7 @@ import os
 import numpy as np
 import cv2
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 class CoverDataset(Dataset):
@@ -26,12 +27,12 @@ class CoverDataset(Dataset):
 
     def load(self):
         self.loaded_images = np.zeros(
-            (len(self.images), self.imsize, self.imsize, 3), dtype="uint8"
+            (len(self.images), self.imsize, self.imsize, 4), dtype="float32"
         )
         for idx, image_path in tqdm(
             enumerate(self.images), desc="Loading dataset", total=len(self.images)
         ):
-            img = cv2.imread(image_path)[:, :, ::-1]
+            img = plt.imread(image_path)
             # img = cv2.resize(img, (self.imsize, self.imsize))
             self.loaded_images[idx] = img
 
@@ -39,19 +40,19 @@ class CoverDataset(Dataset):
         if self.use_ram:
             img = self.loaded_images[index]
         else:
-            img = cv2.imread(self.images[index])[:, :, ::-1]
-            img = cv2.resize(img, (self.imsize, self.imsize))
+            img = plt.imread(self.images[index])
+            # img = cv2.resize(img, (self.imsize, self.imsize))
 
         if self.transforms is not None:
             img = self.transforms(image=img)["image"]
 
-        # minmax norm
-        if self.use_minmax:
-            img = img - img.min()
-            if img.max() != 0:
-                img = img / img.max()
-            img = img - 0.5
-            img = img * 2
+        # # minmax norm
+        # if self.use_minmax:
+        #     img[:, :, :-1] = img[:, :, :-1] - img[:, :, :-1].min()
+        #     if img[:, :, :-1].max() != 0:
+        #         img[:, :, :-1] = img[:, :, :-1] / img[:, :, :-1].max()
+        #     img = img - 0.5
+        #     img = img * 2
         img = img.transpose(2, 0, 1)
         return img
 

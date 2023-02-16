@@ -2,7 +2,7 @@ import albumentations as A
 from dataset import CoverDataset
 from torch.utils.data import DataLoader
 from evaluate import evaluate
-from models import get_models
+from models import get_model
 import albumentations as A
 import os
 import torch
@@ -27,6 +27,8 @@ from defs import (
     NUM_WORKERS,
 )
 
+torch.backends.cudnn.benchmark = True
+torch.jit.enable_onednn_fusion(True)
 os.makedirs(SAMPLE_DIR, exist_ok=True)
 os.makedirs(WEIGHTS_DIR, exist_ok=True)
 
@@ -41,14 +43,16 @@ train_dataloader = DataLoader(
 )
 
 # model
-model = get_models(IMSIZE).to(DEVICE)
+model = get_model(IMSIZE).to(DEVICE)
 model = torch.nn.DataParallel(model)
 model.to(DEVICE)
 
 # utils
-optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
-noise_scheduler = DDPMScheduler(num_train_timesteps=NUM_TRAIN_TIMESTEPS)
-
+optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+noise_scheduler = DDPMScheduler(
+    num_train_timesteps=NUM_TRAIN_TIMESTEPS, beta_schedule="squaredcos_cap_v2"
+)
+scaler = torch.cuda.amp.GradScaler()
 lr_scheduler = get_cosine_schedule_with_warmup(
     optimizer=optimizer,
     num_warmup_steps=int(len(train_dataloader) * 0.1),
@@ -59,8 +63,11 @@ for epoch in tqdm(range(EPOCHS)):
     progress_bar = tqdm(total=len(train_dataloader))
     model.train()
     progress_bar.set_description(f"Epoch {epoch}")
+    train_loss_mean = torch.tensor(0, dtype=float, device=DEVICE)
     for step, imgs in enumerate(train_dataloader):
-        imgs = imgs.to(DEVICE).float()
+        optimizer.zero_grad(set_to_none=True)
+        imgs = imgs.to(DEVICE).float()  # preprocess
+        imgs = (imgs - 0.5) * 2
         noise = torch.randn(imgs.shape).to(DEVICE)
         timesteps = torch.randint(
             0, NUM_TRAIN_TIMESTEPS, (TRAIN_BATCH_SIZE,), device=DEVICE
@@ -69,19 +76,23 @@ for epoch in tqdm(range(EPOCHS)):
         with torch.cuda.amp.autocast(enabled=MIXED_PRECISION):
             noise_pred = model(noisy_images, timesteps, return_dict=False)[0]
             loss = F.mse_loss(noise_pred, noise)
-        loss.backward(loss)
-
-        # clip_grad_norm_(model.parameters(), 1.0)
-        optimizer.step()
+        if MIXED_PRECISION:
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward(loss)
+            optimizer.step()
         lr_scheduler.step()
-        optimizer.zero_grad()
 
+        train_loss_mean += loss
         progress_bar.update(1)
         logs = {
-            "loss": loss.detach().item(),
             "lr": lr_scheduler.get_last_lr()[0],
         }
         progress_bar.set_postfix(**logs)
+
+    print(f"Epoch {epoch}, Loss: {(train_loss_mean / len(train_dataloader)).item()}")
     model.eval()
     pipeline = DDPMPipeline(unet=model.module, scheduler=noise_scheduler)
     if (epoch + 1) % EVALUATION_INTERVAL == 0 or epoch == EPOCHS - 1:
