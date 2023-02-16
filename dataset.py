@@ -46,13 +46,13 @@ class CoverDataset(Dataset):
         if self.transforms is not None:
             img = self.transforms(image=img)["image"]
 
-        # minmax norm
-        if self.use_minmax:
-            img[:, :, :-1] = img[:, :, :-1] - img[:, :, :-1].min()
-            if img[:, :, :-1].max() != 0:
-                img[:, :, :-1] = img[:, :, :-1] / img[:, :, :-1].max()
-            img = img - 0.5
-            img = img * 2
+        # # minmax norm
+        # if self.use_minmax:
+        #     img[:, :, :-1] = img[:, :, :-1] - img[:, :, :-1].min()
+        #     if img[:, :, :-1].max() != 0:
+        #         img[:, :, :-1] = img[:, :, :-1] / img[:, :, :-1].max()
+        #     img = img - 0.5
+        #     img = img * 2
         img = img.transpose(2, 0, 1)
         return img
 
